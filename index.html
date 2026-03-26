@@ -89,12 +89,12 @@ body{background:var(--bg);color:var(--txt);font-family:'Rubik',sans-serif;overfl
 /* ── MAIN ── FIX: margin-inline-end for RTL sidebar-on-right */
 #main{
   margin-top:var(--th);
-  margin-inline-end:var(--sw);
+  margin-inline-start:var(--sw);
   padding:20px 28px;
   transition:margin-inline-end var(--ease);
   min-height:calc(100vh - var(--th));
 }
-#main.col{margin-inline-end:var(--sc);}
+#main.col{margin-inline-start:var(--sc);}
 
 /* Chips */
 #chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:24px;scrollbar-width:none;direction:ltr;}
