@@ -354,6 +354,7 @@ body{background:var(--bg);color:var(--txt);font-family:'Rubik',sans-serif;overfl
 
 <script>
 // ═══════════════════ STATE ═══════════════════
+const API_KEY = 'AIzaSyB-SYIw3diw_2RZFY6cfDPHOkzQN9aQ94E';
 let vids     = [];
 let chMap    = {};
 let ready    = new Set();
@@ -372,7 +373,7 @@ const HEART_OUT  = 'M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.4
 
 // ═══════════════════ BOOT ═══════════════════
 window.addEventListener('DOMContentLoaded', () => {
-  loadFile();
+searchYouTube();
   renderNotifs();
   updateBadge();
   setInterval(checkNewVids, 5 * 60 * 1000);
@@ -387,61 +388,55 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ═══════════════════ LOAD ═══════════════════
-async function loadFile() {
+async function searchYouTube(query = 'חדשות') {
   showSkels();
   try {
-    const r = await fetch('videos.txt?_=' + Date.now());
-    if (!r.ok) throw new Error('לא נמצא קובץ videos.txt');
-    parse(await r.text());
-  } catch(e) { showErr(e.message); }
-}
+    const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&q=${encodeURIComponent(query)}&type=video&key=${API_KEY}`);
+    const data = await response.json();
 
-function parse(txt) {
-  const ids = [];
-  for (const raw of txt.split('\n')) {
-    const l = raw.trim();
-    if (!l || l[0]==='#' || l.slice(0,2)==='//') continue;
-    const id = xid(l);
-    if (id && !ids.includes(id)) ids.push(id);
+    if (data.error) throw new Error(data.error.message);
+
+    vids = data.items.map(item => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      channel: item.snippet.channelTitle,
+      thumb: item.snippet.thumbnails.high ? item.snippet.thumbnails.high.url : item.snippet.thumbnails.medium.url,
+      desc: item.snippet.description
+    }));
+
+    buildChMap();
+    buildSBChannels();
+    renderAll();
+  } catch (e) {
+    showErr("שגיאה בחיפוש: " + e.message);
   }
-  if (!ids.length) { showErr('הקובץ ריק'); return; }
-  vids = ids.map(id=>({id,title:null,channel:null,thumb:`https://img.youtube.com/vi/${id}/mqdefault.jpg`,desc:null}));
-  renderAll();
-  fetchMeta();
-}
-
-function xid(url) {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split(/[?&]/)[0];
-    return u.searchParams.get('v');
-  } catch { return null; }
-}
-
-async function fetchMeta() {
-  for (let i=0; i<vids.length; i+=6) {
-    await Promise.all(vids.slice(i,i+6).map(getMeta));
-    buildChMap(); buildSBChannels(); renderAll();
-  }
-  saveSnapshots();
-}
-
-async function getMeta(v) {
-  if (ready.has(v.id)) return;
-  try {
-    const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${v.id}&format=json`);
-    if (!r.ok) throw 0;
-    const d = await r.json();
-    v.title = d.title; v.channel = d.author_name;
-  } catch { v.title = v.title||'סרטון YouTube'; v.channel = v.channel||'ערוץ'; }
-  ready.add(v.id);
 }
 
 function buildChMap() {
   chMap = {};
   for (const v of vids) {
     if (!v.channel) continue;
-    (chMap[v.channel] = chMap[v.channel]||[]).push(v.id);
+    if (!chMap[v.channel]) chMap[v.channel] = [];
+    chMap[v.channel].push(v.id);
+  }
+}
+
+function buildChMap() {
+  chMap = {};
+  for (const v of vids) {
+    if (!v.channel) continue;
+    if (!chMap[v.channel]) chMap[v.channel] = [];
+    chMap[v.channel].push(v.id);
+  }
+}
+
+// פונקציה שמארגנת את הסרטונים לפי ערוצים
+function buildChMap() {
+  chMap = {};
+  for (const v of vids) {
+    if (!v.channel) continue;
+    if (!chMap[v.channel]) chMap[v.channel] = [];
+    chMap[v.channel].push(v.id);
   }
 }
 
@@ -553,11 +548,15 @@ function fmtTime(iso) {
   return `לפני ${Math.floor(d/86400000)} ימים`;
 }
 
+
+
 // ═══════════════════ VIDEO MODAL ═══════════════════
 function openModal(v) {
   modalVid = v;
-  document.getElementById('vmodal-player').innerHTML =
-    `<iframe src="https://www.youtube.com/embed/${v.id}?autoplay=1&rel=0" allow="autoplay;encrypted-media" allowfullscreen></iframe>`;
+  // התיקון כאן: הוספנו את האות v לפני ה-id
+  const embedUrl = `https://www.youtube.com/embed/${v.id}?autoplay=1&rel=0&enablejsapi=1&origin=${window.location.protocol}//${window.location.host}`;
+  document.getElementById('vmodal-player').innerHTML = 
+    `<iframe src="${embedUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
   document.getElementById('vmodal-title').textContent = v.title||'סרטון YouTube';
 
   const col = PAL[Math.abs(hsh(v.channel||'')) % PAL.length];
@@ -580,7 +579,6 @@ function openModal(v) {
   document.getElementById('vmodal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-
 async function fetchDesc(v) {
   try {
     const r = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${v.id}`);
@@ -799,7 +797,7 @@ function showErr(msg) {
   document.getElementById('content').innerHTML=`
     <div class="empty"><div class="eico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
     <h3>שגיאה בטעינה</h3><p>${x(msg)}</p>
-    <p style="margin-top:10px;font-size:13px;color:var(--txt3)">ודא שקובץ <strong>videos.txt</strong> נמצא באותה תיקייה</p></div>`;
+   <p style="margin-top:10px;font-size:13px;color:var(--txt3)">בדוק את חיבור האינטרנט או את תקינות מפתח ה-API</p></div>`;
 }
 
 // ═══════════════════ SIDEBAR CHANNELS ═══════════════════
@@ -861,11 +859,17 @@ function toggleSB() {
   document.getElementById('main').classList.toggle('col', !sbOpen);
 }
 
-function onSearch(v) { q = v.toLowerCase().trim(); renderAll(); }
+// פונקציה שמופעלת כשלוחצים על זכוכית המגדלת או מקלידים
+function onSearch(v) {
+  q = v.trim();
+  if (q.length > 2) {
+    searchYouTube(q); // מבצע חיפוש אמיתי ביוטיוב
+  }
+}
 
 function reload() {
   vids=[]; chMap={}; ready=new Set(); section='all';
-  showSkels(); loadFile(); toast('מרענן...');
+showSkels(); searchYouTube(); toast('מרענן...');
 }
 
 // ═══════════════════ UTILS ═══════════════════
