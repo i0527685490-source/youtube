@@ -4,840 +4,739 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MyTube</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0f0f0f;
-    --bg2: #181818;
-    --bg3: #272727;
-    --bg4: #3f3f3f;
-    --text: #f1f1f1;
-    --text2: #aaaaaa;
-    --text3: #717171;
-    --accent: #ff0000;
-    --accent2: #ff4444;
-    --sidebar-w: 240px;
-    --sidebar-collapsed: 72px;
-    --topbar-h: 56px;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
-  }
+:root {
+  --bg:   #0f0f0f;
+  --bg2:  #181818;
+  --bg3:  #272727;
+  --bg4:  #3f3f3f;
+  --txt:  #f1f1f1;
+  --txt2: #aaaaaa;
+  --txt3: #717171;
+  --red:  #ff0000;
+  --blue: #3ea6ff;
+  --like: #ff4e4e;
+  --sw:   240px;
+  --sc:   72px;
+  --th:   56px;
+  --ease: 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--txt);font-family:'Rubik',sans-serif;overflow-x:hidden;min-height:100vh;}
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+/* ── TOPBAR ────────────────────────────────────────────── */
+#topbar{
+  position:fixed;top:0;left:0;right:0;height:var(--th);
+  background:var(--bg);display:flex;align-items:center;
+  padding:0 16px;gap:10px;z-index:200;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+}
+.tbtn{
+  background:none;border:none;cursor:pointer;color:var(--txt);
+  width:40px;height:40px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background var(--ease);
+}
+.tbtn:hover{background:var(--bg3);}
+.tbtn svg{width:22px;height:22px;fill:currentColor;}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Rubik', sans-serif;
-    overflow-x: hidden;
-    min-height: 100vh;
-  }
+#logo{display:flex;align-items:center;gap:7px;text-decoration:none;flex-shrink:0;}
+.logo-badge{
+  background:var(--red);border-radius:7px;
+  width:32px;height:22px;display:flex;align-items:center;justify-content:center;
+  transition:transform var(--ease);
+}
+#logo:hover .logo-badge{transform:scale(1.08);}
+.logo-badge svg{width:14px;height:14px;fill:#fff;}
+.logo-txt{font-size:17px;font-weight:700;letter-spacing:-.5px;}
 
-  /* ─── TOPBAR ─── */
-  #topbar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: var(--topbar-h);
-    background: var(--bg);
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    gap: 16px;
-    z-index: 100;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-    backdrop-filter: blur(12px);
-  }
+/*
+  SEARCH — critical fix:
+  Wrap in direction:ltr to prevent RTL from flipping the visual order
+  (in RTL flex, first child appears on the RIGHT, so without ltr the
+  border-radius would be visually inverted as seen in the screenshot)
+*/
+#search-area{
+  flex:1;max-width:580px;
+  display:flex;align-items:center;
+  margin:0 auto;
+  direction:ltr;          /* ← keeps button always on the right */
+}
+#search-input{
+  flex:1;
+  background:var(--bg);
+  border:1.5px solid var(--bg4);
+  border-right:none;
+  border-radius:24px 0 0 24px;
+  padding:8px 16px;
+  color:var(--txt);
+  font-size:14px;font-family:'Rubik',sans-serif;
+  outline:none;
+  direction:rtl;          /* text inside still flows RTL */
+  transition:border-color var(--ease);
+}
+#search-input:focus{border-color:var(--blue);}
+#search-input::placeholder{color:var(--txt3);}
+#search-btn{
+  background:var(--bg3);
+  border:1.5px solid var(--bg4);
+  border-left:none;
+  border-radius:0 24px 24px 0;
+  padding:0 18px;height:38px;
+  cursor:pointer;color:var(--txt);
+  display:flex;align-items:center;
+  transition:background var(--ease);
+}
+#search-btn:hover{background:var(--bg4);}
+#search-btn svg{width:18px;height:18px;fill:currentColor;}
 
-  #menu-btn {
-    background: none; border: none; cursor: pointer;
-    color: var(--text); padding: 8px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    transition: background var(--transition);
-    flex-shrink: 0;
-  }
-  #menu-btn:hover { background: var(--bg3); }
-  #menu-btn svg { width:24px; height:24px; }
+.tb-r{display:flex;align-items:center;gap:6px;margin-inline-start:auto;flex-shrink:0;}
+.avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#ff6b6b,#ffd93d);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0;
+}
 
-  #logo {
-    display: flex; align-items: center; gap: 6px;
-    text-decoration: none; flex-shrink: 0;
-    margin-inline-end: 8px;
-  }
-  #logo .logo-icon {
-    background: var(--accent);
-    border-radius: 8px;
-    width: 34px; height: 24px;
-    display: flex; align-items: center; justify-content: center;
-    transition: transform var(--transition);
-  }
-  #logo:hover .logo-icon { transform: scale(1.08); }
-  #logo .logo-icon svg { width:16px; height:16px; fill:white; }
-  #logo span {
-    font-size: 18px; font-weight: 700; letter-spacing: -0.5px;
-    color: var(--text);
-  }
-  #logo .logo-sub { font-size: 10px; color: var(--text3); font-weight: 400; margin-top: 2px; }
+/* ── SIDEBAR ────────────────────────────────────────────── */
+#sidebar{
+  position:fixed;top:var(--th);right:0;
+  width:var(--sw);height:calc(100vh - var(--th));
+  background:var(--bg);overflow-y:auto;overflow-x:hidden;
+  padding:8px 0 24px;z-index:100;
+  transition:width var(--ease);
+  scrollbar-width:thin;scrollbar-color:var(--bg4) transparent;
+}
+#sidebar.col{width:var(--sc);}
+#sidebar::-webkit-scrollbar{width:4px;}
+#sidebar::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px;}
 
-  /* Search */
-  #search-wrap {
-    flex: 1; max-width: 600px;
-    display: flex; align-items: center; gap: 0;
-    margin: 0 auto;
-  }
-  #search-input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--bg4);
-    border-radius: 24px 0 0 24px;
-    padding: 8px 18px;
-    color: var(--text);
-    font-size: 15px;
-    font-family: 'Rubik', sans-serif;
-    outline: none;
-    transition: border-color var(--transition);
-    direction: rtl;
-  }
-  #search-input:focus { border-color: #3ea6ff; }
-  #search-input::placeholder { color: var(--text3); }
-  #search-btn {
-    background: var(--bg3);
-    border: 1px solid var(--bg4);
-    border-left: none;
-    border-radius: 0 24px 24px 0;
-    padding: 8px 18px;
-    cursor: pointer;
-    color: var(--text);
-    transition: background var(--transition);
-    display: flex; align-items: center;
-  }
-  #search-btn:hover { background: var(--bg4); }
-  #search-btn svg { width:20px; height:20px; }
+.sb-div{height:1px;background:rgba(255,255,255,0.07);margin:8px 0;}
 
-  .topbar-actions {
-    display: flex; align-items: center; gap: 8px;
-    flex-shrink: 0; margin-inline-start: auto;
-  }
-  .topbar-icon-btn {
-    background: none; border: none; cursor: pointer;
-    color: var(--text); padding: 8px; border-radius: 50%;
-    display: flex; align-items: center;
-    transition: background var(--transition);
-    position: relative;
-  }
-  .topbar-icon-btn:hover { background: var(--bg3); }
-  .topbar-icon-btn svg { width:22px; height:22px; }
+.sb-label{
+  font-size:11px;font-weight:600;color:var(--txt3);
+  text-transform:uppercase;letter-spacing:.8px;
+  padding:8px 20px 4px;white-space:nowrap;overflow:hidden;
+  transition:opacity var(--ease),height var(--ease),padding var(--ease);
+  height:28px;
+}
+#sidebar.col .sb-label{opacity:0;height:0;padding:0;}
 
-  .avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: linear-gradient(135deg, #ff6b6b, #ffd93d);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 14px; cursor: pointer;
-    transition: opacity var(--transition);
-    flex-shrink: 0;
-  }
-  .avatar:hover { opacity: 0.85; }
+/*
+  NAV ITEM — fix for collapsed state:
+  Use explicit width for the icon wrapper so it never shrinks.
+  When collapsed, center the icon by switching justify-content.
+  The label opacity→0 hides text without affecting icon layout.
+*/
+.nitem{
+  display:flex;align-items:center;
+  height:40px;padding:0 20px;gap:20px;
+  cursor:pointer;border-radius:10px;margin:2px 8px;
+  transition:background var(--ease),padding var(--ease),gap var(--ease);
+  text-decoration:none;color:var(--txt);
+  white-space:nowrap;overflow:hidden;
+}
+.nitem:hover{background:var(--bg3);}
+.nitem.on{background:var(--bg3);}
+.nitem.on .ni{color:var(--red);}
 
-  /* ─── SIDEBAR ─── */
-  #sidebar {
-    position: fixed;
-    top: var(--topbar-h);
-    right: 0;
-    width: var(--sidebar-w);
-    height: calc(100vh - var(--topbar-h));
-    background: var(--bg);
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 12px 0;
-    z-index: 90;
-    transition: width var(--transition), transform var(--transition);
-    scrollbar-width: thin;
-    scrollbar-color: var(--bg4) transparent;
-  }
-  #sidebar.collapsed { width: var(--sidebar-collapsed); }
-  #sidebar::-webkit-scrollbar { width: 4px; }
-  #sidebar::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 4px; }
+.ni{
+  width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.ni svg{width:22px;height:22px;fill:currentColor;}
 
-  .sidebar-section { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 4px; }
-  .sidebar-section:last-child { border-bottom: none; }
-  .sidebar-section-label {
-    font-size: 11px; font-weight: 600; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.8px;
-    padding: 4px 20px 8px;
-    white-space: nowrap; overflow: hidden;
-    transition: opacity var(--transition);
-  }
-  #sidebar.collapsed .sidebar-section-label { opacity: 0; }
+.nl{font-size:13px;transition:opacity var(--ease);}
+#sidebar.col .nl{opacity:0;}
+/* when collapsed, centre the icon */
+#sidebar.col .nitem{padding:0;justify-content:center;gap:0;}
 
-  .nav-item {
-    display: flex; align-items: center; gap: 20px;
-    padding: 10px 20px;
-    cursor: pointer; border-radius: 10px;
-    margin: 2px 8px;
-    transition: background var(--transition);
-    text-decoration: none; color: var(--text);
-    white-space: nowrap; overflow: hidden;
-    position: relative;
-  }
-  .nav-item:hover { background: var(--bg3); }
-  .nav-item.active { background: var(--bg3); font-weight: 500; }
-  .nav-item.active svg { color: var(--accent); }
-  .nav-item svg { width:22px; height:22px; flex-shrink: 0; }
-  .nav-item span { font-size: 14px; opacity: 1; transition: opacity var(--transition); }
-  #sidebar.collapsed .nav-item span { opacity: 0; }
-  #sidebar.collapsed .nav-item { justify-content: center; padding: 10px; }
+/* Channel mini */
+.chitem{
+  display:flex;align-items:center;gap:14px;
+  height:38px;padding:0 16px;
+  cursor:pointer;border-radius:10px;margin:2px 8px;
+  transition:background var(--ease);
+  color:var(--txt);white-space:nowrap;overflow:hidden;
+}
+.chitem:hover{background:var(--bg3);}
+.chdot{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;flex-shrink:0;
+}
+.chname{font-size:13px;overflow:hidden;text-overflow:ellipsis;}
+#sidebar.col .chitem{padding:0;justify-content:center;gap:0;}
+#sidebar.col .chname{display:none;}
 
-  .channel-item {
-    display: flex; align-items: center; gap: 16px;
-    padding: 8px 20px;
-    cursor: pointer; border-radius: 10px;
-    margin: 2px 8px;
-    transition: background var(--transition);
-    text-decoration: none; color: var(--text);
-    white-space: nowrap; overflow: hidden;
-  }
-  .channel-item:hover { background: var(--bg3); }
-  .channel-avatar {
-    width: 28px; height: 28px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 700; flex-shrink: 0;
-  }
-  .channel-item span { font-size: 13px; }
-  #sidebar.collapsed .channel-item span { opacity: 0; }
+/* ── MAIN ────────────────────────────────────────────────── */
+#main{
+  margin-top:var(--th);
+  margin-inline-end:var(--sw);
+  padding:20px 28px;
+  transition:margin-inline-end var(--ease);
+  min-height:calc(100vh - var(--th));
+}
+#main.col{margin-inline-end:var(--sc);}
 
-  /* ─── MAIN CONTENT ─── */
-  #main {
-    margin-top: var(--topbar-h);
-    margin-inline-end: var(--sidebar-w);
-    padding: 20px 24px;
-    transition: margin var(--transition);
-    min-height: calc(100vh - var(--topbar-h));
-  }
-  #main.sidebar-collapsed { margin-inline-end: var(--sidebar-collapsed); }
+/* Chips — ltr wrapper so order doesn't reverse */
+#chips{
+  display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;
+  margin-bottom:24px;scrollbar-width:none;
+  direction:ltr;
+}
+#chips::-webkit-scrollbar{display:none;}
+.chip{
+  background:var(--bg3);color:var(--txt);
+  border:none;border-radius:8px;
+  padding:7px 14px;font-size:13px;font-weight:500;
+  cursor:pointer;white-space:nowrap;
+  font-family:'Rubik',sans-serif;
+  transition:background var(--ease),transform .1s;
+}
+.chip:hover{background:var(--bg4);transform:translateY(-1px);}
+.chip.on{background:var(--txt);color:var(--bg);}
 
-  /* Category chips */
-  #chips-bar {
-    display: flex; gap: 10px;
-    overflow-x: auto; padding-bottom: 8px;
-    margin-bottom: 24px;
-    scrollbar-width: none;
-    flex-wrap: nowrap;
-    direction: ltr;
-  }
-  #chips-bar::-webkit-scrollbar { display: none; }
-  .chip {
-    background: var(--text);
-    color: var(--bg);
-    border: none; border-radius: 8px;
-    padding: 7px 14px;
-    font-size: 13px; font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background var(--transition), color var(--transition), transform 0.1s;
-    font-family: 'Rubik', sans-serif;
-  }
-  .chip:not(.active) {
-    background: var(--bg3);
-    color: var(--text);
-  }
-  .chip:hover:not(.active) { background: var(--bg4); transform: translateY(-1px); }
-  .chip.active { background: var(--text); color: var(--bg); }
+/* Sections */
+.section{margin-bottom:40px;}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sec-title{font-size:17px;font-weight:600;letter-spacing:-.3px;display:flex;align-items:center;gap:10px;}
+.sec-ico{
+  width:30px;height:30px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+.sec-ico svg{width:16px;height:16px;fill:currentColor;}
+.sec-all{
+  font-size:13px;color:var(--blue);cursor:pointer;
+  border:none;background:none;font-family:'Rubik',sans-serif;
+  font-weight:500;transition:opacity var(--ease);
+}
+.sec-all:hover{opacity:.7;}
 
-  /* Section */
-  .section { margin-bottom: 40px; }
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .section-title {
-    font-size: 18px; font-weight: 600; letter-spacing: -0.3px;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .section-title .section-icon {
-    width: 28px; height: 28px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px;
-  }
-  .section-see-all {
-    font-size: 13px; color: #3ea6ff; cursor: pointer;
-    text-decoration: none; font-weight: 500;
-    transition: opacity var(--transition);
-  }
-  .section-see-all:hover { opacity: 0.7; }
+/* Grids */
+.vgrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+  gap:20px 14px;
+}
+.vgrid.row{
+  display:flex;gap:14px;overflow-x:auto;padding-bottom:6px;
+  scrollbar-width:none;flex-wrap:nowrap;
+}
+.vgrid.row::-webkit-scrollbar{display:none;}
+.vgrid.row .vcard{min-width:270px;max-width:270px;}
 
-  /* Video grid */
-  .video-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px 16px;
-  }
-  .video-grid.horizontal {
-    display: flex; gap: 16px; overflow-x: auto;
-    padding-bottom: 8px; scrollbar-width: none;
-    flex-wrap: nowrap;
-  }
-  .video-grid.horizontal::-webkit-scrollbar { display: none; }
-  .video-grid.horizontal .video-card { min-width: 280px; max-width: 280px; }
+/* Card */
+.vcard{cursor:pointer;transition:transform var(--ease);animation:fu .35s both;position:relative;}
+.vcard:hover{transform:translateY(-3px);}
+@keyframes fu{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 
-  /* Video card */
-  .video-card {
-    cursor: pointer;
-    transition: transform var(--transition);
-    animation: fadeUp 0.4s both;
-  }
-  .video-card:hover { transform: translateY(-3px); }
+.vthumb{
+  position:relative;border-radius:10px;overflow:hidden;
+  aspect-ratio:16/9;background:var(--bg3);
+}
+.vthumb img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;}
+.vcard:hover .vthumb img{transform:scale(1.04);}
 
-  @keyframes fadeUp {
-    from { opacity:0; transform: translateY(16px); }
-    to { opacity:1; transform: translateY(0); }
-  }
+.vhover{
+  position:absolute;inset:0;background:rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity var(--ease);
+}
+.vcard:hover .vhover{opacity:1;}
+.pcircle{
+  width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,.92);
+  display:flex;align-items:center;justify-content:center;
+  transform:scale(.8);transition:transform var(--ease);
+}
+.vcard:hover .pcircle{transform:scale(1);}
+.pcircle svg{width:22px;height:22px;fill:#111;margin-inline-start:3px;}
 
-  .thumbnail-wrap {
-    position: relative; border-radius: var(--radius);
-    overflow: hidden; background: var(--bg3);
-    aspect-ratio: 16/9;
-  }
-  .thumbnail-wrap img {
-    width:100%; height:100%; object-fit:cover;
-    display: block;
-    transition: transform 0.3s ease;
-  }
-  .video-card:hover .thumbnail-wrap img { transform: scale(1.04); }
+/* Like btn overlay */
+.vlbtn{
+  position:absolute;top:8px;left:8px;
+  background:rgba(0,0,0,.7);border:none;border-radius:50%;
+  width:34px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;opacity:0;z-index:5;
+  transition:opacity var(--ease),transform var(--ease),background var(--ease);
+}
+.vcard:hover .vlbtn,.vlbtn.on{opacity:1;}
+.vlbtn:hover{transform:scale(1.15);background:rgba(0,0,0,.9);}
+.vlbtn.on{background:rgba(255,78,78,.15);}
+.vlbtn svg{width:16px;height:16px;fill:var(--txt3);transition:fill var(--ease);}
+.vlbtn.on svg{fill:var(--like);}
 
-  .duration-badge {
-    position: absolute; bottom: 6px; right: 6px;
-    background: rgba(0,0,0,0.85);
-    color: #fff; font-size: 11px; font-weight: 600;
-    padding: 2px 6px; border-radius: 4px;
-    font-variant-numeric: tabular-nums;
-  }
+/* Card info */
+.vinfo{display:flex;gap:10px;padding:10px 2px 0;}
+.vav{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+}
+.vtxt{flex:1;min-width:0;}
+.vtitle{
+  font-size:14px;font-weight:500;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  color:var(--txt);margin-bottom:4px;
+}
+.vch{font-size:12px;color:var(--txt3);display:flex;align-items:center;gap:4px;margin-bottom:2px;}
+.vch svg{width:12px;height:12px;fill:currentColor;}
+.vlabel{font-size:11px;color:var(--like);font-weight:500;display:flex;align-items:center;gap:3px;}
+.vlabel svg{width:10px;height:10px;fill:var(--like);}
 
-  .hover-preview {
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,0.3);
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity var(--transition);
-  }
-  .video-card:hover .hover-preview { opacity: 1; }
-  .play-btn-overlay {
-    width: 48px; height: 48px;
-    background: rgba(255,255,255,0.95);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    transform: scale(0.8);
-    transition: transform var(--transition);
-  }
-  .video-card:hover .play-btn-overlay { transform: scale(1); }
-  .play-btn-overlay svg { width:22px; height:22px; fill:#111; margin-inline-start: 3px; }
+/* Skeleton */
+.skel .vthumb{background:var(--bg3);}
+.sl{
+  background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);
+  background-size:200% 100%;animation:shim 1.4s infinite;
+  border-radius:4px;height:13px;margin:6px 0;
+}
+.sl.s{width:55%;}
+.sa{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;margin-top:2px;
+  background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);
+  background-size:200% 100%;animation:shim 1.4s infinite;
+}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-  /* Card info */
-  .card-info {
-    display: flex; gap: 10px; padding: 10px 2px 4px;
-    align-items: flex-start;
-  }
-  .card-avatar {
-    width: 34px; height: 34px; border-radius: 50%;
-    flex-shrink: 0; margin-top: 2px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700;
-  }
-  .card-text { flex: 1; min-width: 0; }
-  .card-title {
-    font-size: 14px; font-weight: 500; line-height: 1.4;
-    display: -webkit-box; -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical; overflow: hidden;
-    color: var(--text);
-    margin-bottom: 4px;
-  }
-  .card-channel {
-    font-size: 13px; color: var(--text3);
-    display: flex; align-items: center; gap: 4px;
-    margin-bottom: 2px;
-  }
-  .card-channel:hover { color: var(--text2); }
-  .card-meta { font-size: 12px; color: var(--text3); }
+/* Empty */
+.empty{text-align:center;padding:80px 20px;color:var(--txt3);}
+.eico{width:64px;height:64px;margin:0 auto 20px;opacity:.3;}
+.eico svg{width:64px;height:64px;fill:currentColor;}
+.empty h3{font-size:18px;color:var(--txt2);margin-bottom:8px;}
+.empty p{font-size:14px;}
 
-  /* Skeleton loader */
-  .skeleton-card .thumbnail-wrap { background: var(--bg3); }
-  .skeleton-line {
-    background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 4px;
-    height: 14px; margin: 6px 0;
-  }
-  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-  .skeleton-line.short { width: 60%; }
-  .skeleton-avatar {
-    width: 34px; height: 34px; border-radius: 50%;
-    flex-shrink: 0;
-    background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    margin-top: 4px;
-  }
+/* Toast */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--bg3);color:var(--txt);
+  padding:10px 20px;border-radius:8px;font-size:14px;z-index:9999;
+  opacity:0;pointer-events:none;transition:opacity .25s;
+  white-space:nowrap;border:1px solid var(--bg4);
+}
+#toast.show{opacity:1;}
 
-  /* Error / empty state */
-  .empty-state {
-    text-align: center; padding: 60px 20px; color: var(--text3);
-  }
-  .empty-state .icon { font-size: 52px; margin-bottom: 16px; }
-  .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--text2); }
-
-  /* Toast */
-  #toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: var(--bg3); color: var(--text);
-    padding: 10px 20px; border-radius: 8px;
-    font-size: 14px; z-index: 9999;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.3s;
-    white-space: nowrap;
-    border: 1px solid var(--bg4);
-  }
-  #toast.show { opacity: 1; }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    #sidebar { display: none; }
-    #main { margin-inline-end: 0 !important; padding: 16px; }
-    .video-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-    #search-wrap { max-width: none; }
-  }
-
-  /* Scrollbar global */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 6px; }
+/* Responsive */
+@media(max-width:760px){
+  #sidebar{display:none;}
+  #main{margin-inline-end:0!important;padding:16px 14px;}
+  .vgrid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+  #search-area{max-width:none;}
+}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px;}
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
+<!-- ══ TOPBAR ══ -->
 <div id="topbar">
-  <button id="menu-btn" onclick="toggleSidebar()" title="תפריט">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+  <button class="tbtn" onclick="toggleSB()">
+    <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
   </button>
   <a href="#" id="logo">
-    <div class="logo-icon">
+    <div class="logo-badge">
       <svg viewBox="0 0 24 24"><path d="M10 15l5.19-3L10 9v6zm12-3c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"/></svg>
     </div>
-    <div>
-      <span>MyTube</span>
-      <div class="logo-sub">האוסף שלי</div>
-    </div>
+    <span class="logo-txt">MyTube</span>
   </a>
-  <div id="search-wrap">
-    <input type="text" id="search-input" placeholder="🔍  חיפוש..." oninput="filterVideos(this.value)" />
-    <button id="search-btn" onclick="filterVideos(document.getElementById('search-input').value)">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+
+  <!-- direction:ltr wrapper = search icon always on the right, regardless of RTL page -->
+  <div id="search-area">
+    <input id="search-input" type="text" placeholder="חיפוש..." oninput="onSearch(this.value)">
+    <button id="search-btn" onclick="onSearch(document.getElementById('search-input').value)">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
     </button>
   </div>
-  <div class="topbar-actions">
-    <button class="topbar-icon-btn" title="התראות">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+
+  <div class="tb-r">
+    <button class="tbtn">
+      <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
     </button>
-    <div class="avatar" title="פרופיל">מ</div>
+    <div class="avatar">מ</div>
   </div>
 </div>
 
-<!-- SIDEBAR -->
+<!-- ══ SIDEBAR ══ -->
 <div id="sidebar">
-  <div class="sidebar-section">
-    <div class="nav-item active" onclick="showSection('all')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      <span>דף הבית</span>
-    </div>
-    <div class="nav-item" onclick="showSection('recommended')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-      <span>מומלצים</span>
-    </div>
-    <div class="nav-item" onclick="showSection('favorites')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-      <span>מועדפים</span>
-    </div>
-    <div class="nav-item" onclick="showSection('channels')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z"/></svg>
-      <span>ערוצים</span>
-    </div>
+  <div class="nitem on" id="n-all" onclick="setSection('all',this)">
+    <span class="ni"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
+    <span class="nl">דף הבית</span>
+  </div>
+  <div class="nitem" id="n-recommended" onclick="setSection('recommended',this)">
+    <span class="ni"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+    <span class="nl">מומלצים</span>
+  </div>
+  <div class="nitem" id="n-liked" onclick="setSection('liked',this)">
+    <span class="ni"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
+    <span class="nl">אהבתי</span>
+  </div>
+  <div class="nitem" id="n-channels" onclick="setSection('channels',this)">
+    <span class="ni"><svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z"/></svg></span>
+    <span class="nl">ערוצים</span>
   </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-section-label">ערוצים</div>
-    <div id="sidebar-channels"></div>
-  </div>
+  <div class="sb-div"></div>
+  <div class="sb-label">ערוצים שלך</div>
+  <div id="sb-chs"></div>
 
-  <div class="sidebar-section">
-    <div class="nav-item" onclick="reloadVideos()">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-      <span>רענן סרטונים</span>
-    </div>
-    <div class="nav-item" onclick="showHelp()">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
-      <span>עזרה</span>
-    </div>
+  <div class="sb-div"></div>
+  <div class="nitem" onclick="reload()">
+    <span class="ni"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></span>
+    <span class="nl">רענן</span>
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- ══ MAIN ══ -->
 <div id="main">
-  <!-- Chips -->
-  <div id="chips-bar">
-    <button class="chip active" onclick="selectChip(this,'all')">הכל</button>
-    <button class="chip" onclick="selectChip(this,'recommended')">מומלצים</button>
-    <button class="chip" onclick="selectChip(this,'favorites')">מועדפים</button>
-    <button class="chip" onclick="selectChip(this,'channels')">ערוצים</button>
+  <div id="chips">
+    <button class="chip on"  onclick="chip(this,'all')">הכל</button>
+    <button class="chip"     onclick="chip(this,'recommended')">מומלצים</button>
+    <button class="chip"     onclick="chip(this,'liked')">אהבתי</button>
+    <button class="chip"     onclick="chip(this,'channels')">ערוצים</button>
   </div>
-
-  <!-- Content -->
-  <div id="content">
-    <div class="empty-state">
-      <div class="icon">📺</div>
-      <h3>טוען סרטונים...</h3>
-      <p>אנא המתן</p>
-    </div>
-  </div>
+  <div id="content"></div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ─── STATE ───────────────────────────────────────────────────────────────
-let allData = {};         // { sectionName: [videoId, ...] }
-let videoMeta = {};       // { videoId: { title, channel, thumb } }
-let sidebarOpen = true;
-let currentSection = 'all';
-let searchQuery = '';
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let vids        = [];      // [{id, title, channel, thumb}]
+let chMap       = {};      // {channelName:[id,...]}
+let ready       = new Set();
+let likes       = new Set(JSON.parse(localStorage.getItem('ml')||'[]'));
+let sbOpen      = true;
+let section     = 'all';
+let q           = '';
 
-const COLORS = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#20c997','#f06595'];
-const EMOJIS = { 'מומלצים':'⭐','מועדפים':'❤️','channels':'📺','ערוץ':'📡' };
+const PAL = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#20c997','#f06595','#74c0fc'];
 
-// ─── INIT ─────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  loadVideosFile();
-});
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => loadFile());
 
-async function loadVideosFile() {
+async function loadFile() {
+  showSkels();
   try {
-    const res = await fetch('videos.txt?_=' + Date.now());
-    if (!res.ok) throw new Error('לא נמצא קובץ videos.txt');
-    const text = await res.text();
-    parseVideosFile(text);
-  } catch(e) {
-    showError(e.message);
-  }
+    const r = await fetch('videos.txt?_=' + Date.now());
+    if (!r.ok) throw new Error('לא נמצא קובץ videos.txt');
+    parse(await r.text());
+  } catch(e) { showErr(e.message); }
 }
 
-function parseVideosFile(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-  let currentSection = 'כללי';
-  const data = {};
-
-  for (const line of lines) {
-    if (line.startsWith('#')) {
-      currentSection = line.replace(/^#+\s*/, '').trim();
-      if (!data[currentSection]) data[currentSection] = [];
-    } else if (line.startsWith('http')) {
-      const id = extractVideoId(line);
-      if (id) {
-        if (!data[currentSection]) data[currentSection] = [];
-        if (!data[currentSection].includes(id)) data[currentSection].push(id);
-      }
-    }
+function parse(txt) {
+  const ids = [];
+  for (const raw of txt.split('\n')) {
+    const l = raw.trim();
+    if (!l || l[0]==='#' || l.slice(0,2)==='//') continue;
+    const id = xid(l);
+    if (id && !ids.includes(id)) ids.push(id);
   }
-
-  allData = data;
-  buildSidebarChannels();
-  buildChips();
+  if (!ids.length) { showErr('הקובץ ריק — הוסף קישורי YouTube'); return; }
+  vids = ids.map(id=>({id, title:null, channel:null, thumb:`https://img.youtube.com/vi/${id}/mqdefault.jpg`}));
   renderAll();
-  fetchAllMeta();
+  fetchMeta();
 }
 
-function extractVideoId(url) {
+function xid(url) {
   try {
     const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0];
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split(/[?&]/)[0];
     return u.searchParams.get('v');
   } catch { return null; }
 }
 
-// ─── META FETCH ───────────────────────────────────────────────────────────
-async function fetchAllMeta() {
-  const allIds = [...new Set(Object.values(allData).flat())];
-  const chunks = [];
-  for (let i = 0; i < allIds.length; i += 8) chunks.push(allIds.slice(i, i+8));
-
-  for (const chunk of chunks) {
-    await Promise.all(chunk.map(id => fetchVideoMeta(id)));
-    renderAll(); // re-render as data arrives
+// ═══════════════════════════════════════════════════════════
+//  META
+// ═══════════════════════════════════════════════════════════
+async function fetchMeta() {
+  for (let i=0; i < vids.length; i+=6) {
+    await Promise.all(vids.slice(i,i+6).map(getMeta));
+    buildChMap();
+    buildSBChannels();
+    renderAll();
   }
 }
 
-async function fetchVideoMeta(id) {
-  if (videoMeta[id]) return;
+async function getMeta(v) {
+  if (ready.has(v.id)) return;
   try {
-    const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${id}&format=json`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    videoMeta[id] = {
-      title: data.title,
-      channel: data.author_name,
-      thumb: `https://img.youtube.com/vi/${id}/mqdefault.jpg`
-    };
+    const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${v.id}&format=json`);
+    if (!r.ok) throw 0;
+    const d = await r.json();
+    v.title = d.title; v.channel = d.author_name;
   } catch {
-    videoMeta[id] = {
-      title: 'סרטון YouTube',
-      channel: 'ערוץ לא ידוע',
-      thumb: `https://img.youtube.com/vi/${id}/mqdefault.jpg`
-    };
+    v.title = v.title||'סרטון YouTube';
+    v.channel = v.channel||'ערוץ';
+  }
+  ready.add(v.id);
+}
+
+function buildChMap() {
+  chMap = {};
+  for (const v of vids) {
+    if (!v.channel) continue;
+    (chMap[v.channel] = chMap[v.channel]||[]).push(v.id);
   }
 }
 
-// ─── RENDER ───────────────────────────────────────────────────────────────
-function renderAll() {
-  const content = document.getElementById('content');
-  content.innerHTML = '';
-
-  const sections = Object.entries(allData).filter(([name, ids]) => {
-    if (currentSection !== 'all') {
-      const norm = normSection(name);
-      if (currentSection === 'recommended' && norm !== 'recommended') return false;
-      if (currentSection === 'favorites' && norm !== 'favorites') return false;
-      if (currentSection === 'channels' && !name.includes('ערוץ') && !name.toLowerCase().includes('channel')) return false;
+// ═══════════════════════════════════════════════════════════
+//  RECOMMENDATIONS
+//  Algorithm: one video per channel (diversity), then fill the rest
+// ═══════════════════════════════════════════════════════════
+function getRec() {
+  const chs = Object.keys(chMap);
+  if (!chs.length) return vids.slice(0,12).map(v=>v.id);
+  const picks = chs.map(ch => chMap[ch][0]);
+  for (const ch of chs)
+    for (const id of chMap[ch].slice(1)) {
+      if (!picks.includes(id)) picks.push(id);
+      if (picks.length>=12) break;
     }
-    return ids.length > 0;
-  });
+  return picks.slice(0,12);
+}
 
-  if (sections.length === 0) {
-    content.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><h3>לא נמצאו סרטונים</h3><p>נסה לחפש משהו אחר</p></div>`;
-    return;
+// ═══════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════
+function renderAll() {
+  const ct = document.getElementById('content');
+  ct.innerHTML = '';
+
+  const filt = q ? vids.filter(v =>
+    (v.title||'').toLowerCase().includes(q) ||
+    (v.channel||'').toLowerCase().includes(q)
+  ) : null;
+
+  const has = (arr) => filt ? arr.filter(v => filt.includes(v)).length > 0 : arr.length > 0;
+
+  if (section==='all' || section==='recommended') {
+    const recVids = getRec().map(id => vids.find(v=>v.id===id)).filter(Boolean);
+    const d = filt ? recVids.filter(v=>filt.includes(v)) : recVids;
+    if (d.length) ct.appendChild(mkSec('מומלצים', d,
+      '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+      '#ffd93d', d.length>4));
   }
 
-  for (const [name, ids] of sections) {
-    const filtered = searchQuery
-      ? ids.filter(id => {
-          const m = videoMeta[id];
-          if (!m) return true;
-          const q = searchQuery.toLowerCase();
-          return m.title.toLowerCase().includes(q) || m.channel.toLowerCase().includes(q);
-        })
-      : ids;
-    if (filtered.length === 0) continue;
+  if (section==='all' || section==='liked') {
+    const lv = vids.filter(v=>likes.has(v.id));
+    const d = filt ? lv.filter(v=>filt.includes(v)) : lv;
+    if (d.length) ct.appendChild(mkSec('אהבתי', d,
+      '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>',
+      '#ff6b6b', d.length>4));
+  }
 
-    const section = renderSection(name, filtered);
-    content.appendChild(section);
+  if (section==='all' || section==='channels') {
+    for (const [ch, ids] of Object.entries(chMap)) {
+      const cv = ids.map(id=>vids.find(v=>v.id===id)).filter(Boolean);
+      const d  = filt ? cv.filter(v=>filt.includes(v)) : cv;
+      if (!d.length) continue;
+      const c = PAL[Math.abs(h(ch)) % PAL.length];
+      ct.appendChild(mkSec(ch, d,
+        '<path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z"/>',
+        c, d.length>4));
+    }
+  }
+
+  if (!ct.children.length) {
+    ct.appendChild(section==='liked'
+      ? mkEmpty('עדיין לא אהבת סרטונים', 'לחץ על הלב בכרטיסיית סרטון')
+      : mkEmpty('לא נמצאו סרטונים', q ? 'נסה מילת חיפוש אחרת' : 'בדוק את videos.txt'));
   }
 }
 
-function renderSection(name, ids) {
-  const el = document.createElement('div');
-  el.className = 'section';
+function mkSec(title, vs, icoPath, color, scrollable) {
+  const s = document.createElement('div');
+  s.className = 'section';
+  const hdr = document.createElement('div');
+  hdr.className = 'sec-hdr';
+  hdr.innerHTML = `
+    <div class="sec-title">
+      <div class="sec-ico" style="background:${color}22;color:${color}">
+        <svg viewBox="0 0 24 24">${icoPath}</svg>
+      </div>
+      ${x(title)}
+    </div>
+    ${vs.length>4 ? `<button class="sec-all">${vs.length} סרטונים</button>` : ''}`;
+  s.appendChild(hdr);
 
-  const isChannel = name.includes('ערוץ') || name.toLowerCase().includes('channel:');
-  const isFav = normSection(name) === 'favorites';
-  const isRec = normSection(name) === 'recommended';
+  const g = document.createElement('div');
+  g.className = 'vgrid' + (scrollable ? ' row' : '');
+  vs.forEach((v,i) => g.appendChild(mkCard(v, i*45)));
+  s.appendChild(g);
+  return s;
+}
 
-  let icon = '🎬';
-  if (isRec) icon = '⭐';
-  else if (isFav) icon = '❤️';
-  else if (isChannel) icon = '📡';
+function mkCard(v, delay) {
+  const el  = document.createElement('div');
+  el.className = 'vcard' + (v.title ? '' : ' skel');
+  el.style.animationDelay = delay + 'ms';
 
-  const iconColor = COLORS[Math.abs(hashStr(name)) % COLORS.length];
-  const displayName = name.replace(/^ערוץ:\s*/,'').replace(/^channel:/i,'');
+  if (!v.title) {
+    el.innerHTML = `<div class="vthumb"></div><div class="vinfo"><div class="sa"></div><div class="vtxt"><div class="sl"></div><div class="sl s"></div></div></div>`;
+    return el;
+  }
+
+  const col  = PAL[Math.abs(h(v.channel||'')) % PAL.length];
+  const init = (v.channel||'?').slice(0,2).toUpperCase();
+  const liked= likes.has(v.id);
+
+  const HEART_FULL = 'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
+  const HEART_OUT  = 'M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z';
 
   el.innerHTML = `
-    <div class="section-header">
-      <div class="section-title">
-        <div class="section-icon" style="background:${iconColor}22; color:${iconColor}">${icon}</div>
-        ${displayName}
+    <div class="vthumb">
+      <img src="${v.thumb}" alt="${x(v.title)}" loading="lazy"
+           onerror="this.src='https://img.youtube.com/vi/${v.id}/default.jpg'">
+      <div class="vhover">
+        <div class="pcircle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
       </div>
-      ${ids.length > 4 ? `<a class="section-see-all" onclick="void(0)">הצג הכל (${ids.length})</a>` : ''}
+      <button class="vlbtn${liked?' on':''}" data-id="${v.id}" title="${liked?'הסר לייק':'אהבתי'}">
+        <svg viewBox="0 0 24 24"><path d="${liked?HEART_FULL:HEART_OUT}"/></svg>
+      </button>
     </div>
-  `;
+    <div class="vinfo">
+      <div class="vav" style="background:${col}22;color:${col}">${init}</div>
+      <div class="vtxt">
+        <div class="vtitle">${x(v.title)}</div>
+        <div class="vch">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+          ${x(v.channel)}
+        </div>
+        ${liked ? `<div class="vlabel"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>אהבתי</div>` : ''}
+      </div>
+    </div>`;
 
-  const grid = document.createElement('div');
-  grid.className = 'video-grid' + (ids.length > 6 ? ' horizontal' : '');
-
-  ids.forEach((id, i) => {
-    const card = renderCard(id, i * 50);
-    grid.appendChild(card);
+  // thumb click → open video
+  el.querySelector('.vthumb').addEventListener('click', e => {
+    if (e.target.closest('.vlbtn')) return;
+    window.open(`https://www.youtube.com/watch?v=${v.id}`, '_blank');
   });
 
-  el.appendChild(grid);
+  // like button
+  el.querySelector('.vlbtn').addEventListener('click', e => {
+    e.stopPropagation();
+    toggleLike(v.id, el.querySelector('.vlbtn'));
+  });
+
   return el;
 }
 
-function renderCard(id, delay) {
-  const meta = videoMeta[id];
-  const card = document.createElement('div');
-  card.className = 'video-card' + (meta ? '' : ' skeleton-card');
-  card.style.animationDelay = delay + 'ms';
-  card.onclick = () => openVideo(id);
-
-  const color = COLORS[Math.abs(hashStr(id)) % COLORS.length];
-  const initials = meta ? (meta.channel || 'Y').slice(0,2).toUpperCase() : '..';
-
-  if (meta) {
-    card.innerHTML = `
-      <div class="thumbnail-wrap">
-        <img src="${meta.thumb}" alt="${meta.title}" loading="lazy"
-             onerror="this.src='https://img.youtube.com/vi/${id}/default.jpg'">
-        <div class="hover-preview">
-          <div class="play-btn-overlay">
-            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          </div>
-        </div>
-      </div>
-      <div class="card-info">
-        <div class="card-avatar" style="background:${color}22; color:${color}">${initials}</div>
-        <div class="card-text">
-          <div class="card-title">${escHtml(meta.title)}</div>
-          <div class="card-channel">${escHtml(meta.channel)}</div>
-          <div class="card-meta">YouTube</div>
-        </div>
-      </div>`;
-  } else {
-    card.innerHTML = `
-      <div class="thumbnail-wrap" style="aspect-ratio:16/9"></div>
-      <div class="card-info">
-        <div class="skeleton-avatar"></div>
-        <div class="card-text">
-          <div class="skeleton-line"></div>
-          <div class="skeleton-line short"></div>
-        </div>
-      </div>`;
-  }
-  return card;
+function mkEmpty(t, s) {
+  const d=document.createElement('div'); d.className='empty';
+  d.innerHTML=`<div class="eico"><svg viewBox="0 0 24 24"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/></svg></div><h3>${x(t)}</h3><p>${x(s)}</p>`;
+  return d;
 }
 
-function openVideo(id) {
-  window.open(`https://www.youtube.com/watch?v=${id}`, '_blank');
+function showSkels() {
+  const ct=document.getElementById('content'); ct.innerHTML='';
+  const g=document.createElement('div'); g.className='vgrid';
+  for(let i=0;i<8;i++) g.appendChild(mkCard({id:'_'+i,title:null},i*30));
+  ct.appendChild(g);
 }
 
-// ─── SIDEBAR CHANNELS ─────────────────────────────────────────────────────
-function buildSidebarChannels() {
-  const container = document.getElementById('sidebar-channels');
-  container.innerHTML = '';
-  Object.keys(allData).forEach((name, i) => {
-    const color = COLORS[i % COLORS.length];
-    const initials = name.replace(/^ערוץ:\s*/,'').slice(0,2);
-    const el = document.createElement('div');
-    el.className = 'channel-item';
-    el.innerHTML = `
-      <div class="channel-avatar" style="background:${color}22; color:${color}">${initials}</div>
-      <span>${name.replace(/^ערוץ:\s*/,'')}</span>`;
-    el.onclick = () => {
-      currentSection = 'all';
-      renderAll();
-      toast(`מציג: ${name}`);
-    };
-    container.appendChild(el);
-  });
-}
-
-// ─── CHIPS ────────────────────────────────────────────────────────────────
-function buildChips() {
-  // keep base chips, add custom section chips
-  const bar = document.getElementById('chips-bar');
-  const existingBase = ['all','recommended','favorites','channels'];
-  
-  Object.keys(allData).forEach(name => {
-    if (!['מומלצים','מועדפים'].includes(name) && !name.startsWith('ערוץ:')) {
-      const btn = document.createElement('button');
-      btn.className = 'chip';
-      btn.textContent = name;
-      btn.onclick = function() { selectChip(this, name); };
-      bar.appendChild(btn);
-    }
-  });
-}
-
-function selectChip(el, section) {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  currentSection = section;
-  renderAll();
-  // update nav active
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-}
-
-// ─── SEARCH ───────────────────────────────────────────────────────────────
-function filterVideos(q) {
-  searchQuery = q;
-  renderAll();
-}
-
-// ─── SHOW SECTION (from sidebar nav) ─────────────────────────────────────
-function showSection(sec) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  currentSection = sec;
-  document.querySelectorAll('.chip').forEach(c => {
-    c.classList.toggle('active', c.getAttribute('onclick')?.includes(`'${sec}'`) || (sec==='all' && c.textContent==='הכל'));
-  });
-  renderAll();
-}
-
-// ─── SIDEBAR TOGGLE ───────────────────────────────────────────────────────
-function toggleSidebar() {
-  sidebarOpen = !sidebarOpen;
-  document.getElementById('sidebar').classList.toggle('collapsed', !sidebarOpen);
-  document.getElementById('main').classList.toggle('sidebar-collapsed', !sidebarOpen);
-}
-
-// ─── RELOAD ───────────────────────────────────────────────────────────────
-function reloadVideos() {
-  allData = {}; videoMeta = {};
-  document.getElementById('content').innerHTML = '<div class="empty-state"><div class="icon">🔄</div><h3>טוען מחדש...</h3></div>';
-  loadVideosFile();
-  toast('מרענן סרטונים...');
-}
-
-// ─── HELP ─────────────────────────────────────────────────────────────────
-function showHelp() {
-  toast('ערוך את videos.txt והוסף קישורי יוטיוב! כל # יוצר קטגוריה חדשה.');
-}
-
-// ─── UTILS ────────────────────────────────────────────────────────────────
-function normSection(name) {
-  const n = name.toLowerCase();
-  if (n.includes('מומלץ') || n.includes('מומלצ') || n.includes('recommend')) return 'recommended';
-  if (n.includes('מועדפ') || n.includes('favorite') || n.includes('heart')) return 'favorites';
-  return 'channel';
-}
-
-function hashStr(s) {
-  let h = 0;
-  for (let i=0; i<s.length; i++) h = ((h<<5)-h)+s.charCodeAt(i)|0;
-  return h;
-}
-
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function showError(msg) {
-  document.getElementById('content').innerHTML = `
-    <div class="empty-state">
-      <div class="icon">⚠️</div>
-      <h3>שגיאה בטעינה</h3>
-      <p>${msg}</p>
-      <br><p style="font-size:13px;color:var(--text3)">
-        ודא שקובץ <strong>videos.txt</strong> נמצא באותה תיקייה כמו index.html
-      </p>
+function showErr(msg) {
+  document.getElementById('content').innerHTML=`
+    <div class="empty">
+      <div class="eico"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg></div>
+      <h3>שגיאה בטעינה</h3><p>${x(msg)}</p>
+      <p style="margin-top:10px;font-size:13px;color:var(--txt3)">ודא שקובץ <strong>videos.txt</strong> נמצא באותה תיקייה</p>
     </div>`;
 }
 
-let toastTimer;
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+// ═══════════════════════════════════════════════════════════
+//  SIDEBAR CHANNELS
+// ═══════════════════════════════════════════════════════════
+function buildSBChannels() {
+  const w=document.getElementById('sb-chs'); w.innerHTML='';
+  Object.keys(chMap).forEach((ch,i) => {
+    const c=PAL[i%PAL.length];
+    const el=document.createElement('div'); el.className='chitem';
+    el.innerHTML=`<div class="chdot" style="background:${c}22;color:${c}">${ch.slice(0,2).toUpperCase()}</div><span class="chname">${x(ch)}</span>`;
+    el.onclick=()=>{ section='channels'; renderAll(); toast(ch); };
+    w.appendChild(el);
+  });
 }
+
+// ═══════════════════════════════════════════════════════════
+//  LIKES
+// ═══════════════════════════════════════════════════════════
+function toggleLike(id, btn) {
+  const FULL='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
+  const OUT ='M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z';
+  if (likes.has(id)) {
+    likes.delete(id); btn.classList.remove('on');
+    btn.querySelector('path').setAttribute('d', OUT);
+    toast('הוסר מאהבתי');
+  } else {
+    likes.add(id); btn.classList.add('on');
+    btn.querySelector('path').setAttribute('d', FULL);
+    toast('נוסף לאהבתי');
+  }
+  localStorage.setItem('ml', JSON.stringify([...likes]));
+  setTimeout(renderAll, 80);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════════════════
+function setSection(sec, el) {
+  section = sec;
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
+  el.classList.add('on');
+  syncChips(sec);
+  renderAll();
+}
+
+function chip(btn, sec) {
+  section = sec;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  const n = document.getElementById('n-'+sec);
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.remove('on'));
+  if (n) n.classList.add('on');
+  renderAll();
+}
+
+function syncChips(sec) {
+  document.querySelectorAll('.chip').forEach(c => {
+    const oc = c.getAttribute('onclick')||'';
+    c.classList.toggle('on', oc.includes(`'${sec}'`));
+  });
+}
+
+function toggleSB() {
+  sbOpen = !sbOpen;
+  document.getElementById('sidebar').classList.toggle('col', !sbOpen);
+  document.getElementById('main').classList.toggle('col', !sbOpen);
+}
+
+function onSearch(v) {
+  q = v.toLowerCase().trim();
+  renderAll();
+}
+
+function reload() {
+  vids=[]; chMap={}; ready=new Set(); section='all';
+  showSkels(); loadFile(); toast('מרענן...');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function h(s){let r=0;for(let i=0;i<s.length;i++)r=((r<<5)-r)+s.charCodeAt(i)|0;return r;}
+function x(s=''){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let _t;
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(_t);_t=setTimeout(()=>t.classList.remove('show'),2600);}
 </script>
 </body>
 </html>
